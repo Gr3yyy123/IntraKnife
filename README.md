@@ -18,9 +18,9 @@ IntraKnife.exe -m spray -l com.txt -u user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx
 U can use this tool to collect adinfo
 
 ```
-IntraKnife.exe -m spray -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f user
-IntraKnife.exe -m spray -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f computer
-IntraKnife.exe -m spray -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f group
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f user
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f computer
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f group
 ```
 
 ### parse DNS
