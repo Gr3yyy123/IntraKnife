@@ -9,8 +9,8 @@ a tool can be used in intarnet for easily pentesting
 U can use this tool to spray hash on a webshell
 
 ```
-IntraKnife.exe -m spray -l com.txt -u user.txt -P admin123
-IntraKnife.exe -m spray -l com.txt -u user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx
+IntraKnife.exe -m spray -l com.txt -U user.txt -P admin123
+IntraKnife.exe -m spray -l com.txt -U user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ### search adinfo
