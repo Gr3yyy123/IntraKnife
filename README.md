@@ -12,6 +12,12 @@ U can use this tool to spray hash on a webshell
 IntraKnife.exe -m spray -l com.txt -U user.txt -P admin123
 IntraKnife.exe -m spray -l com.txt -U user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+u can use `-A` to check if this user has wmi permission
+
+```
+IntraKnife.exe -m spray -l com.txt -u user.txt -P admin123 -A
+IntraKnife.exe -m spray -l com.txt -u user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx -A
+```
 
 ### search adinfo
 
@@ -39,6 +45,11 @@ U can use this tool to list shares
 IntraKnife.exe -m share -l com.txt -u cia/administrator -p admin123
 IntraKnife.exe -m share -l com.txt -u cia/administrator -ha xxxxxxxxxxxxxxxxxxxxxxxx
 ```
+or u can just try an anonymous share
+
+```
+IntraKnife.exe -m share -l com.txt
+```
 
 ### find active
 
@@ -47,4 +58,8 @@ U can use this tool to find the active host in intranet (with ping)
 ```
 IntraKnife.exe -m active -l com.txt
 ```
+now cidr format is supported
 
+```
+IntraKnife.exe -m active -c 10.10.1.1/24
+```
