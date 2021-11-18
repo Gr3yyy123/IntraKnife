@@ -235,7 +235,7 @@ def main():
     parser.add_argument('-ha', action='store', dest = "hashes", help='LM:NTLM')
     parser.add_argument('-A', action='store_true', dest = "check", help='check if the user is admin')
     parser.add_argument('-l', action='store', dest = "computerlist", help='Computer_list')
-    parser.add_argument('-a', action='store', default='*', dest = "attr", help='point the attributes,such as: "samaccountname,pwdlastset,admincount,mail"')
+    parser.add_argument('-a', action='store', default='*', dest = "attr", help='point the attributes,such as: "samaccountname"')
     parser.add_argument('-c', action='store', dest = "cidr", help='cidr,maybe x.x.x.x/24')
     parser.add_argument('-p', action='store', default='445', dest = "port", help='target_port')
     parser.add_argument('-t', action='store', default='20', dest = "thread", help='threading num')
