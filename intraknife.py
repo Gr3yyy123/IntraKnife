@@ -13,6 +13,7 @@ password = ''
 nthash = ''
 mode = ''
 username = ''
+time_sec = ''
 check = False
 
 # parse cidr
@@ -116,11 +117,15 @@ def spray(username, password, nthash, target_ip, check, port=445):
         return False
     
 # adinfo search
-def adinfo(username,password,target_ip,dn,filter):
+def adinfo(username,password,target_ip,domain,filter,attr):
     server = Server(target_ip, get_info=ALL)
+    dn = ''
+    for n in domain.split('.'):
+        dn = dn + 'dc={},'.format(n)
+    dn = dn[:-1]
     try:
         conn = Connection(server, user=username, password=password, auto_bind=True, authentication=NTLM)
-        conn.search(dn, search_filter="(objectclass={})".format(filter), attributes=["*"])
+        conn.search(dn, search_filter="(objectclass={})".format(filter), attributes=[attr])
     except:
         print('[-] search error...')
         sys.exit(1)
@@ -131,7 +136,10 @@ def adinfo(username,password,target_ip,dn,filter):
                 try:
                     print(n+' : ' + str(i['attributes'][n]))
                 except:
-                    print(n+' : ' + ','.join(i['attributes'][n]))
+                    try:
+                        print(n+' : ' + ','.join(i['attributes'][n]))
+                    except:
+                        print(n+' : ' + '???')
             print('\n')
 
 # list share folder
@@ -157,9 +165,9 @@ def list_share(username,password,nthash,target_ip):
 # parse dns
 def domain2ip(target_ip):
         try:
-            print(target_ip+': '+socket.gethostbyname(target_ip))
+            print('[+] '+target_ip+': '+socket.gethostbyname(target_ip))
         except:
-            print(target_ip+': error...')
+            print('[-] '+target_ip+': error...')
 
 # find alive
 def findalive(target_ip):
@@ -180,31 +188,31 @@ class MyThread(threading.Thread):
         self.func()
 
 def worker():
-    global mode,username,nthash,password,check
+    global mode,username,nthash,password,check,sec,time_sec
     if mode == 'spray':
         while not q.empty():
             (target_ip,user) = q.get()
             #i = num - q.qsize()
             spray(user, password, nthash, target_ip, check)
-            time.sleep(1)
+            time.sleep(int(time_sec))
     elif mode == 'share':
         while not q.empty():
             target_ip = q.get()
             #i = num - q.qsize()
             list_share(username, password, nthash, target_ip)
-            time.sleep(1)
+            time.sleep(int(time_sec))
     elif mode == 'dns':
         while not q.empty():
             target_ip = q.get()
             #i = num - q.qsize()
             domain2ip(target_ip)
-            time.sleep(1)
+            time.sleep(int(time_sec))
     elif mode == 'active':
         while not q.empty():
             target_ip = q.get()
             #i = num - q.qsize()
             findalive(target_ip)
-            time.sleep(1)
+            time.sleep(int(time_sec))
     else:
         sys.exit(1)
 
@@ -227,11 +235,14 @@ def main():
     parser.add_argument('-ha', action='store', dest = "hashes", help='LM:NTLM')
     parser.add_argument('-A', action='store_true', dest = "check", help='check if the user is admin')
     parser.add_argument('-l', action='store', dest = "computerlist", help='Computer_list')
+    parser.add_argument('-a', action='store', default='*', dest = "attr", help='point the attributes,such as: "samaccountname,pwdlastset,admincount,mail"')
     parser.add_argument('-c', action='store', dest = "cidr", help='cidr,maybe x.x.x.x/24')
     parser.add_argument('-p', action='store', default='445', dest = "port", help='target_port')
-    parser.add_argument('-t', action='store', default='20', dest = "thread", help='threading')
+    parser.add_argument('-t', action='store', default='20', dest = "thread", help='threading num')
     parser.add_argument('-d', action='store', dest = "dc_ip", help='dc ip for adinfo query')
-    parser.add_argument('-dn', action='store', dest = "DN", help='DN for adinfo query: "dc=xxx,dc=com"')
+    parser.add_argument('-T', action='store', default='1', dest = "wait", help='time sec,maybe u want to exec slowly ?')
+    parser.add_argument('-codec', action='store', default='utf-8', dest = "codec", help='point the codec')
+    parser.add_argument('-dm', action='store', dest = "Domain", help='domain name')
     parser.add_argument('-f', action='store', dest = "filter", help='filter for adinfo query: [ user|computer|group ]')
 
     if len(sys.argv)==1:
@@ -239,9 +250,10 @@ def main():
         sys.exit(1)
     options = parser.parse_args()
 
-    global mode,username,nthash,password,check
+    global mode,username,nthash,password,check,time_sec
     mode = options.mode
     num = options.thread
+    time_sec = options.wait
     print('[*] starting u game...')
     # spray hash
     if options.mode == 'spray':
@@ -262,10 +274,10 @@ def main():
 
     # search adinfo       
     elif options.mode == 'adinfo':
-        if options.user is None or options.password is None or options.dc_ip is None or options.DN is None or options.filter is None:
+        if options.user is None or options.password is None or options.dc_ip is None or options.Domain is None or options.filter is None:
             parser.print_help()
             sys.exit(1)
-        adinfo(options.user,options.password,options.dc_ip,options.DN,options.filter)
+        adinfo(options.user,options.password,options.dc_ip,options.Domain,options.filter,options.attr)
 
     # list share
     elif options.mode == 'share':
@@ -314,5 +326,9 @@ def main():
 if __name__ == '__main__':
     q = queue.Queue()
     main()
-         
+            
         
+
+
+
+ 
