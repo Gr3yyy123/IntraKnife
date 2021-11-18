@@ -46,8 +46,8 @@ IntraKnife.exe -m dns -l com.txt
 U can use this tool to list shares
 
 ```
-IntraKnife.exe -m share -l com.txt -u cia/administrator -p admin123
-IntraKnife.exe -m share -l com.txt -u cia/administrator -ha xxxxxxxxxxxxxxxxxxxxxxxx
+IntraKnife.exe -m share -l com.txt -u cia\administrator -p admin123
+IntraKnife.exe -m share -l com.txt -u cia\administrator -ha xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 or u can just try an anonymous share
 
