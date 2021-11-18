@@ -30,7 +30,7 @@ IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admi
 ```
 or u can use `-a` point the attribute
 ```
-IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admin123 -f user -a samaccountname,mail
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admin123 -f user -a samaccountname
 ```
 
 ### parse DNS
