@@ -15,8 +15,8 @@ IntraKnife.exe -m spray -l com.txt -U user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx
 u can use `-A` to check if this user has wmi permission
 
 ```
-IntraKnife.exe -m spray -l com.txt -u user.txt -P admin123 -A
-IntraKnife.exe -m spray -l com.txt -u user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx -A
+IntraKnife.exe -m spray -l com.txt -U user.txt -P admin123 -A
+IntraKnife.exe -m spray -l com.txt -U user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx -A
 ```
 
 ### search adinfo
@@ -24,9 +24,13 @@ IntraKnife.exe -m spray -l com.txt -u user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx -A
 U can use this tool to collect adinfo
 
 ```
-IntraKnife.exe -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f user
-IntraKnife.exe -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f computer
-IntraKnife.exe -m adinfo -d 10.10.1.1 -dn "dc=cia,dc=local" -u cia\administrator -P admin123 -f group
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admin123 -f user
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admin123 -f computer
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admin123 -f group
+```
+or u can use `-a` point the attribute
+```
+IntraKnife.exe -m adinfo -d 10.10.1.1 -dm cia.local -u cia\administrator -P admin123 -f user -a samaccountname,mail
 ```
 
 ### parse DNS
@@ -62,4 +66,12 @@ now cidr format is supported
 
 ```
 IntraKnife.exe -m active -c 10.10.1.1/24
+```
+
+## Time sec
+
+sometimes u could send request slowly to escape EDR,this may take longer time but keep u silent
+
+```
+IntraKnife.exe -m spray -l com.txt -U user.txt -P admin123 -t 1 -T 20 
 ```
