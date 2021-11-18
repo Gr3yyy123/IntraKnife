@@ -92,9 +92,9 @@ def get_ip_list(ip):
 
 # hash spray
 def spray(username, password, nthash, target_ip, check, port=445):
-    if '/' in username:
-        domain = username.split('/')[0]
-        username = username.split('/')[1]
+    if '\\' in username:
+        domain = username.split('\\')[0]
+        username = username.split('\\')[1]
     else:
         domain = ''
     #print(username+' '+domain+' '+password+' '+nthash)
@@ -144,9 +144,9 @@ def adinfo(username,password,target_ip,domain,filter,attr):
 
 # list share folder
 def list_share(username,password,nthash,target_ip):
-    if '/' in username:
-        domain = username.split('/')[0]
-        username = username.split('/')[1]
+    if '\\' in username:
+        domain = username.split('\\')[0]
+        username = username.split('\\')[1]
     else:
         domain = ''
     try:
@@ -331,4 +331,4 @@ if __name__ == '__main__':
 
 
 
- 
+  
