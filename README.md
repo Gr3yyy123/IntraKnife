@@ -72,7 +72,7 @@ IntraKnife.exe -m active -c 10.10.1.1/24
 
 ## Time sec
 
-sometimes u could send request slowly to escape EDR,this may take longer time but keep u silent
+sometimes u could send request slowly to escape EDR by `-T` ,this may take longer time but keep u silent
 
 ```
 IntraKnife.exe -m spray -l com.txt -U user.txt -P admin123 -t 1 -T 20 
